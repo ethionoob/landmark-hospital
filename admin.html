@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard · Landmark Hospital</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
+  <!-- Supabase JS Library -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f0f4f8;
+      color: #0b1a33;
+      line-height: 1.6;
+    }
+    .container { max-width: 1400px; margin: 0 auto; padding: 0 24px; }
+    
+    .admin-header {
+      background: #0b1a33;
+      color: #fff;
+      padding: 16px 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+    }
+    .admin-header .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .admin-header h1 {
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .admin-header h1 i { color: #ff1e1e; }
+    .admin-header .nav-links {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .admin-header a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: 6px;
+      transition: 0.2s;
+    }
+    .admin-header a:hover { background: rgba(255,255,255,0.1); }
+    .admin-header .logout-btn {
+      background: #ff1e1e;
+      padding: 6px 18px;
+      border-radius: 60px;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .admin-header .logout-btn:hover { background: #cc0000; }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      padding: 30px 0;
+    }
+    .dashboard-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      border: 1px solid #e9edf2;
+    }
+    .dashboard-card h2 {
+      font-size: 1.2rem;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #0b1a33;
+      border-bottom: 2px solid #f0f4f8;
+      padding-bottom: 12px;
+    }
+    .dashboard-card h2 i { color: #ff1e1e; }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 4px;
+      font-size: 0.9rem;
+    }
+    .form-group input, .form-group textarea, .form-group select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #dce0e5;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-family: 'Inter', sans-serif;
+      transition: 0.2s;
+    }
+    .form-group input:focus, .form-group textarea:focus {
+      outline: none;
+      border-color: #0b1a33;
+      box-shadow: 0 0 0 3px rgba(11,26,51,0.1);
+    }
+    .form-group textarea { min-height: 60px; resize: vertical; }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+      font-size: 0.95rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-primary { background: #0b1a33; color: #fff; }
+    .btn-primary:hover { background: #1f3a5f; transform: translateY(-2px); }
+    .btn-danger { background: #ff1e1e; color: #fff; }
+    .btn-danger:hover { background: #cc0000; transform: translateY(-2px); }
+    .btn-success { background: #1a8a4a; color: #fff; }
+    .btn-success:hover { background: #146a3a; transform: translateY(-2px); }
+    .btn-sm { padding: 6px 14px; font-size: 0.85rem; }
+
+    .item-list {
+      max-height: 250px;
+      overflow-y: auto;
+      margin-top: 12px;
+    }
+    .item-list .item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      background: #f8fafc;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      border: 1px solid #e9edf2;
+    }
+    .item .item-info { flex: 1; }
+    .item .item-info strong { display: block; }
+    .item .item-info small { color: #6b7a8a; font-size: 0.8rem; }
+    .item .item-actions { display: flex; gap: 6px; }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 12px;
+      border-radius: 60px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+    .badge-available { background: #d4e8dd; color: #0d4a2b; }
+    .badge-unavailable { background: #fce4e4; color: #8a1a1a; }
+
+    .status-msg {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      display: none;
+    }
+    .status-msg.success { display: block; background: #d4e8dd; color: #0d4a2b; border: 1px solid #b0d4c1; }
+    .status-msg.error { display: block; background: #fce4e4; color: #8a1a1a; border: 1px solid #f5c8c8; }
+    .status-msg.info { display: block; background: #d4e4f5; color: #1a3a6a; border: 1px solid #b8cce5; }
+
+    .login-screen {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0b1a33 0%, #1a3555 100%);
+    }
+    .login-box {
+      background: #fff;
+      padding: 40px;
+      border-radius: 20px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .login-box h2 {
+      text-align: center;
+      margin-bottom: 24px;
+      color: #0b1a33;
+    }
+    .login-box h2 i { color: #ff1e1e; }
+    .login-box .form-group { margin-bottom: 18px; }
+    .login-box .btn { width: 100%; justify-content: center; }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 768px) {
+      .admin-header .container { flex-direction: column; align-items: stretch; text-align: center; }
+      .admin-header .nav-links { justify-content: center; }
+      .dashboard-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ============================================================
+     LOGIN SCREEN
+     ============================================================ -->
+<div id="loginScreen" class="login-screen">
+  <div class="login-box">
+    <h2><i class="fas fa-lock"></i> Admin Login</h2>
+    <p style="text-align:center; color:#6b7a8a; margin-bottom:20px;">Enter your credentials to manage the website</p>
+    <div id="loginStatus" class="status-msg"></div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="loginEmail" placeholder="admin@hospital.com" />
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="loginPassword" placeholder="••••••••" />
+    </div>
+    <button class="btn btn-primary" onclick="handleLogin()">
+      <i class="fas fa-sign-in-alt"></i> Login
+    </button>
+    <p style="text-align:center; margin-top:14px; font-size:0.85rem; color:#6b7a8a;">
+      Default: admin@hospital.com / admin123
+    </p>
+  </div>
+</div>
+
+<!-- ============================================================
+     ADMIN DASHBOARD
+     ============================================================ -->
+<div id="adminDashboard" class="hidden">
+  <header class="admin-header">
+    <div class="container">
+      <h1><i class="fas fa-stethoscope"></i> Landmark Admin</h1>
+      <div class="nav-links">
+        <a href="index.html" target="_blank"><i class="fas fa-eye"></i> View Site</a>
+        <a href="gallery.html" target="_blank"><i class="fas fa-images"></i> Gallery</a>
+        <button class="logout-btn" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div id="dashboardStatus" class="status-msg"></div>
+
+    <div class="dashboard-grid">
+      <!-- PATIENT STORIES -->
+      <div class="dashboard-card">
+        <h2><i class="fas fa-quote-left"></i> Patient Stories</h2>
+        <div class="form-group">
+          <label>Add New Story</label>
+          <input type="text" id="storyName" placeholder="Patient name (e.g., Emily R.)" />
+          <textarea id="storyText" placeholder="Write the testimonial..."></textarea>
+          <button class="btn btn-primary btn-sm" onclick="addStory()"><i class="fas fa-plus"></i> Add Story</button>
+        </div>
+        <div class="item-list" id="storyList"></div>
+      </div>
+
+      <!-- DEPARTMENTS -->
+      <div class="dashboard-card">
+        <h2><i class="fas fa-building"></i> Departments</h2>
+        <div class="form-group">
+          <label>Add Department</label>
+          <div style="display:flex; gap:8px;">
+            <input type="text" id="deptName" placeholder="e.g., Cardiology" style="flex:1;" />
+            <input type="text" id="deptIcon" placeholder="fa-heartbeat" style="flex:1;" />
+          </div>
+          <textarea id="deptDesc" placeholder="Description..." style="margin-top:8px;"></textarea>
+          <button class="btn btn-primary btn-sm" onclick="addDepartment()"><i class="fas fa-plus"></i> Add Department</button>
+        </div>
+        <div class="item-list" id="deptList"></div>
+      </div>
+
+      <!-- DOCTORS -->
+      <div class="dashboard-card">
+        <h2><i class="fas fa-user-md"></i> Doctors</h2>
+        <div class="form-group">
+          <label>Add Doctor</label>
+          <input type="text" id="docName" placeholder="Full name" />
+          <input type="text" id="docYears" placeholder="Years of experience" style="margin-top:6px;" />
+          <input type="text" id="docDate" placeholder="Next available date (e.g., Apr 12)" style="margin-top:6px;" />
+          <select id="docAvailability" style="margin-top:6px;">
+            <option value="true">Available</option>
+            <option value="false">Unavailable</option>
+          </select>
+          <button class="btn btn-primary btn-sm" onclick="addDoctor()" style="margin-top:8px;"><i class="fas fa-plus"></i> Add Doctor</button>
+        </div>
+        <div class="item-list" id="docList"></div>
+      </div>
+
+      <!-- GALLERY -->
+      <div class="dashboard-card">
+        <h2><i class="fas fa-images"></i> Gallery Photos</h2>
+        <div class="form-group">
+          <label>Add Photo</label>
+          <input type="text" id="photoTitle" placeholder="Photo title" />
+          <input type="text" id="photoDesc" placeholder="Description" style="margin-top:6px;" />
+          <input type="text" id="photoUrl" placeholder="Image URL (or path)" style="margin-top:6px;" />
+          <button class="btn btn-primary btn-sm" onclick="addPhoto()" style="margin-top:8px;"><i class="fas fa-plus"></i> Add Photo</button>
+        </div>
+        <div class="item-list" id="photoList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     COMPLETE JAVASCRIPT - SUPABASE VERSION
+     ============================================================ -->
+<script>
+
+const SUPABASE_URL = 'https://kglbbkfhbqnbmdslbevu.supabase.co/rest/v1/';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtnbGJia2ZoYnFuYm1kc2xiZXZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwMjAxNTIsImV4cCI6MjA5ODU5NjE1Mn0.Fdk_OSdkomtQURFOXKIrzGBV6meUX2-e8yw8XHUU7rg';
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ============================================================
+// STEP 3: DATA FUNCTIONS (Using Supabase)
+// ============================================================
+
+async function getData(table) {
+  try {
+    const { data, error } = await supabase
+      .from(table)
+      .select('*')
+      .order('id', { ascending: true });
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error(`Error fetching ${table}:`, error);
+    showStatus(`Error loading ${table}: ${error.message}`, 'error');
+    return [];
+  }
+}
+
+async function setData(table, items) {
+  try {
+    // Delete all existing records
+    const { error: deleteError } = await supabase
+      .from(table)
+      .delete()
+      .neq('id', 0);
+    if (deleteError) throw deleteError;
+    
+    // Insert new records
+    if (items.length > 0) {
+      const { error: insertError } = await supabase
+        .from(table)
+        .insert(items);
+      if (insertError) throw insertError;
+    }
+    return true;
+  } catch (error) {
+    console.error(`Error saving ${table}:`, error);
+    showStatus(`Error saving: ${error.message}`, 'error');
+    return false;
+  }
+}
+
+// ============================================================
+// STEP 4: RENDER FUNCTIONS (Updated column names)
+// ============================================================
+
+async function renderStories() {
+  const list = document.getElementById('storyList');
+  const stories = await getData('stories');
+  if (stories.length === 0) {
+    list.innerHTML = '<p style="color:#6b7a8a; text-align:center; padding:20px;">No stories yet. Add one above!</p>';
+    return;
+  }
+  list.innerHTML = stories.map(s => `
+    <div class="item">
+      <div class="item-info">
+        <strong>${s.name}</strong>
+        <small>${s.story_text}</small>
+      </div>
+      <div class="item-actions">
+        <button class="btn btn-danger btn-sm" onclick="deleteStory(${s.id})"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function renderDepartments() {
+  const list = document.getElementById('deptList');
+  const depts = await getData('departments');
+  if (depts.length === 0) {
+    list.innerHTML = '<p style="color:#6b7a8a; text-align:center; padding:20px;">No departments yet. Add one above!</p>';
+    return;
+  }
+  list.innerHTML = depts.map(d => `
+    <div class="item">
+      <div class="item-info">
+        <strong><i class="fas ${d.icon}"></i> ${d.name}</strong>
+        <small>${d.description}</small>
+      </div>
+      <div class="item-actions">
+        <button class="btn btn-danger btn-sm" onclick="deleteDepartment(${d.id})"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function renderDoctors() {
+  const list = document.getElementById('docList');
+  const docs = await getData('doctors');
+  if (docs.length === 0) {
+    list.innerHTML = '<p style="color:#6b7a8a; text-align:center; padding:20px;">No doctors yet. Add one above!</p>';
+    return;
+  }
+  list.innerHTML = docs.map(d => `
+    <div class="item">
+      <div class="item-info">
+        <strong>${d.name}</strong>
+        <small>${d.years} yrs · Next: ${d.next_date} · 
+          <span class="badge ${d.available ? 'badge-available' : 'badge-unavailable'}">
+            ${d.available ? 'Available' : 'Unavailable'}
+          </span>
+        </small>
+      </div>
+      <div class="item-actions">
+        <button class="btn btn-success btn-sm" onclick="toggleAvailability(${d.id})">
+          <i class="fas ${d.available ? 'fa-times' : 'fa-check'}"></i>
+        </button>
+        <button class="btn btn-danger btn-sm" onclick="deleteDoctor(${d.id})"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function renderPhotos() {
+  const list = document.getElementById('photoList');
+  const photos = await getData('photos');
+  if (photos.length === 0) {
+    list.innerHTML = '<p style="color:#6b7a8a; text-align:center; padding:20px;">No photos yet. Add one above!</p>';
+    return;
+  }
+  list.innerHTML = photos.map(p => `
+    <div class="item">
+      <div class="item-info">
+        <strong>${p.title}</strong>
+        <small>${p.photo_desc}</small>
+        <small style="display:block;color:#6b7a8a;font-size:0.7rem;">${p.url}</small>
+      </div>
+      <div class="item-actions">
+        <button class="btn btn-danger btn-sm" onclick="deletePhoto(${p.id})"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// STEP 5: CRUD OPERATIONS (All async - Updated column names)
+// ============================================================
+
+// --- Patient Stories ---
+async function addStory() {
+  const name = document.getElementById('storyName').value.trim();
+  const story_text = document.getElementById('storyText').value.trim();
+  if (!name || !story_text) { 
+    showStatus('Please fill in both fields.', 'error'); 
+    return; 
+  }
+  
+  const stories = await getData('stories');
+  const id = stories.length ? Math.max(...stories.map(s => s.id)) + 1 : 1;
+  stories.push({ id, name, story_text });
+  await setData('stories', stories);
+  await renderStories();
+  document.getElementById('storyName').value = '';
+  document.getElementById('storyText').value = '';
+  showStatus('Story added successfully!', 'success');
+}
+
+async function deleteStory(id) {
+  if (!confirm('Delete this story?')) return;
+  let stories = await getData('stories');
+  stories = stories.filter(s => s.id !== id);
+  await setData('stories', stories);
+  await renderStories();
+  showStatus('Story deleted.', 'info');
+}
+
+// --- Departments ---
+async function addDepartment() {
+  const name = document.getElementById('deptName').value.trim();
+  const icon = document.getElementById('deptIcon').value.trim() || 'fa-hospital';
+  const description = document.getElementById('deptDesc').value.trim();
+  if (!name || !description) { 
+    showStatus('Please fill in all fields.', 'error'); 
+    return; 
+  }
+  
+  const depts = await getData('departments');
+  const id = depts.length ? Math.max(...depts.map(d => d.id)) + 1 : 1;
+  depts.push({ id, name, icon, description });
+  await setData('departments', depts);
+  await renderDepartments();
+  document.getElementById('deptName').value = '';
+  document.getElementById('deptIcon').value = '';
+  document.getElementById('deptDesc').value = '';
+  showStatus('Department added!', 'success');
+}
+
+async function deleteDepartment(id) {
+  if (!confirm('Delete this department?')) return;
+  let depts = await getData('departments');
+  depts = depts.filter(d => d.id !== id);
+  await setData('departments', depts);
+  await renderDepartments();
+  showStatus('Department deleted.', 'info');
+}
+
+// --- Doctors ---
+async function addDoctor() {
+  const name = document.getElementById('docName').value.trim();
+  const years = document.getElementById('docYears').value.trim();
+  const next_date = document.getElementById('docDate').value.trim();
+  const available = document.getElementById('docAvailability').value === 'true';
+  if (!name || !years || !next_date) { 
+    showStatus('Please fill in all fields.', 'error'); 
+    return; 
+  }
+  
+  const docs = await getData('doctors');
+  const id = docs.length ? Math.max(...docs.map(d => d.id)) + 1 : 1;
+  docs.push({ id, name, years, next_date, available });
+  await setData('doctors', docs);
+  await renderDoctors();
+  document.getElementById('docName').value = '';
+  document.getElementById('docYears').value = '';
+  document.getElementById('docDate').value = '';
+  showStatus('Doctor added!', 'success');
+}
+
+async function toggleAvailability(id) {
+  const docs = await getData('doctors');
+  const doc = docs.find(d => d.id === id);
+  if (doc) {
+    doc.available = !doc.available;
+    await setData('doctors', docs);
+    await renderDoctors();
+    showStatus(`Doctor is now ${doc.available ? 'available' : 'unavailable'}`, 'info');
+  }
+}
+
+async function deleteDoctor(id) {
+  if (!confirm('Delete this doctor?')) return;
+  let docs = await getData('doctors');
+  docs = docs.filter(d => d.id !== id);
+  await setData('doctors', docs);
+  await renderDoctors();
+  showStatus('Doctor deleted.', 'info');
+}
+
+// --- Photos ---
+async function addPhoto() {
+  const title = document.getElementById('photoTitle').value.trim();
+  const photo_desc = document.getElementById('photoDesc').value.trim();
+  const url = document.getElementById('photoUrl').value.trim();
+  if (!title || !photo_desc || !url) { 
+    showStatus('Please fill in all fields.', 'error'); 
+    return; 
+  }
+  
+  const photos = await getData('photos');
+  const id = photos.length ? Math.max(...photos.map(p => p.id)) + 1 : 1;
+  photos.push({ id, title, photo_desc, url });
+  await setData('photos', photos);
+  await renderPhotos();
+  document.getElementById('photoTitle').value = '';
+  document.getElementById('photoDesc').value = '';
+  document.getElementById('photoUrl').value = '';
+  showStatus('Photo added to gallery!', 'success');
+}
+
+async function deletePhoto(id) {
+  if (!confirm('Delete this photo?')) return;
+  let photos = await getData('photos');
+  photos = photos.filter(p => p.id !== id);
+  await setData('photos', photos);
+  await renderPhotos();
+  showStatus('Photo deleted.', 'info');
+}
+
+// ============================================================
+// STEP 6: UI HELPERS
+// ============================================================
+
+function showStatus(msg, type = 'info') {
+  const el = document.getElementById('dashboardStatus');
+  el.textContent = msg;
+  el.className = `status-msg ${type}`;
+  // Auto-hide after 4 seconds
+  if (window.statusTimeout) clearTimeout(window.statusTimeout);
+  window.statusTimeout = setTimeout(() => { 
+    el.className = 'status-msg'; 
+  }, 4000);
+}
+
+// ============================================================
+// STEP 7: LOGIN / LOGOUT
+// ============================================================
+
+async function handleLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value.trim();
+  const status = document.getElementById('loginStatus');
+  
+  // Simple hardcoded authentication
+  if (email === 'admin@hospital.com' && password === 'admin123') {
+    status.className = 'status-msg';
+    status.textContent = '';
+    
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('adminDashboard').classList.remove('hidden');
+    
+    // Load all data
+    await renderStories();
+    await renderDepartments();
+    await renderDoctors();
+    await renderPhotos();
+    
+    showStatus('✅ Welcome back, Admin!', 'success');
+  } else {
+    status.textContent = '❌ Invalid email or password. Please try again.';
+    status.className = 'status-msg error';
+  }
+}
+
+function handleLogout() {
+  if (confirm('Are you sure you want to logout?')) {
+    document.getElementById('adminDashboard').classList.add('hidden');
+    document.getElementById('loginScreen').classList.remove('hidden');
+    document.getElementById('loginStatus').className = 'status-msg';
+    document.getElementById('loginStatus').textContent = '';
+    document.getElementById('loginEmail').value = '';
+    document.getElementById('loginPassword').value = '';
+    // Clear any status messages
+    document.getElementById('dashboardStatus').className = 'status-msg';
+  }
+}
+
+// ============================================================
+// STEP 8: KEYBOARD SUPPORT (Enter to login)
+// ============================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('loginPassword').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') handleLogin();
+  });
+  document.getElementById('loginEmail').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') handleLogin();
+  });
+});
+
+// ============================================================
+// STEP 9: CONSOLE HELP
+// ============================================================
+
+console.log('🚀 Landmark Hospital Admin Panel Loaded!');
+console.log('📌 To connect to Supabase:');
+console.log('   1. Replace SUPABASE_URL and SUPABASE_ANON_KEY with your credentials');
+console.log('   2. Run the SQL in Supabase SQL Editor (see comments)');
+console.log('   3. Login with: admin@hospital.com / admin123');
+console.log('');
+console.log('📊 Table names and columns:');
+console.log('   stories: id, name, story_text, created_at');
+console.log('   departments: id, name, icon, description, created_at');
+console.log('   doctors: id, name, years, next_date, available, created_at');
+console.log('   photos: id, title, photo_desc, url, created_at');
+
+// ============================================================
+// END OF JAVASCRIPT
+// ============================================================
+</script>
+
+</body>
+</html>

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Landmark Hospital · Ethiopia's Best Hospital</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js"></script>
+  <!-- Font Awesome 6 (free) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <!-- Google Font (Inter) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <!-- Header (sticky) -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="#hero" class="logo">
+        <i class="fas fa-stethoscope"></i>
+        <span>Landmark Hospital</span>
+      </a>
+      <button class="hamburger" id="hamburgerBtn" aria-label="Menu">
+        <i class="fas fa-bars" id="hamburgerIcon"></i>
+      </button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#hero">Home</a></li>
+        <li><a href="#departments">Departments</a></li>
+        <li><a href="#doctors">Doctors</a></li>
+        <li><a href="#partners">Partners</a></li>
+        <li><a href="#gallery">Gallery</a></li>
+        <li><a href="#testimonials">Testimonials</a></li>
+        <li><a href="#contact">Contact</a></li>
+        <li><a href="admin.html" class="btn-nav" target="_blank">Login</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero -->
+    <div class="container">
+      <div class="hero" id="hero">
+        <div class="hero-content">
+          <div class="hero-badge"><i class="fas fa-shield-alt"></i> Patient safety. Friendly Hospital.</div>
+          <h1><i class="fas fa-heartbeat"></i> Advanced care, <br />human touch.</h1>
+          <p>Compassionate, world‑class healthcare — from routine checkups to complex surgeries, we're with you every step.</p>
+          <div class="hero-actions">
+            <a href="#contact" class="btn-primary"><i class="fas fa-phone-alt"></i> Get in Touch</a>
+            <a href="#departments" class="btn-outline"><i class="fas fa-stethoscope"></i> Explore Care</a>
+          </div>
+          <div class="hero-stats">
+            <span><i class="fas fa-clock"></i> Guaranteed 24/7 service</span>
+            <span><i class="fas fa-calendar-check"></i> 17+ years</span>
+          </div>
+        </div>
+        <div class="hero-image">
+          <img src="images/new-hero.png" alt="Landmark Hospital Logo" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Departments -->
+    <section class="section-padding" id="departments" style="background: #132a45;">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title"> Our Departments</h2>
+          <p class="section-subtitle">Specialized care across every stage of life — advanced, personal, and complete.</p>
+        </div>
+        <div class="grid-6">
+          <div class="card"><i class="fas fa-heartbeat"></i><h4>Cardiology</h4><p>Heart health, diagnostics &amp; intervention.</p></div>
+          <div class="card"><i class="fas fa-brain"></i><h4>Neurology</h4><p>Brain, spine &amp; nervous system care.</p></div>
+          <div class="card"><i class="fas fa-bone"></i><h4>Orthopedics</h4><p>Bone, joint &amp; muscle recovery.</p></div>
+          <div class="card"><i class="fas fa-baby"></i><h4>Pediatrics</h4><p>Child &amp; adolescent health.</p></div>
+          <div class="card"><i class="fas fa-lungs"></i><h4>Pulmonology</h4><p>Respiratory &amp; lung care.</p></div>
+          <div class="card"><i class="fas fa-eye"></i><h4>Ophthalmology</h4><p>Vision &amp; eye surgery.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Doctors -->
+    <section class="section-padding" id="doctors">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title-white">Meet Our Specialists</h2>
+          <p class="section-subtitle-white">Highly experienced individuals, available for you.</p>
+        </div>
+        <div class="grid-4">
+          <div class="card doctor-card"><img src="images/men-doctor-1.jpg" alt="Dr. Adam" /><h4>Dr. Adam</h4><div class="doc-meta"><span><i class="fas fa-briefcase"></i> 14 Years</span></div><span class="badge-available">Available</span></div>
+          <div class="card doctor-card"><img src="images/female-doctor-1.jpg" alt="Dr. Emmahos" /><h4>Dr. Emmahos</h4><div class="doc-meta"><span><i class="fas fa-briefcase"></i> 11 Years</span></div><span class="badge-available">Available</span></div>
+          <div class="card doctor-card"><img src="images/men-doctor-2.jpg" alt="Dr. Yohannes" /><h4>Dr. Yohannes</h4><div class="doc-meta"><span><i class="fas fa-briefcase"></i> 19 Years</span></div><span class="badge-available">Available</span></div>
+          <div class="card doctor-card"><img src="images/female-doctor-2.jpg" alt="Dr. Sara" /><h4>Dr. Sara</h4><div class="doc-meta"><span><i class="fas fa-briefcase"></i> 9 Years</span></div><span class="badge-available">Available</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== PARTNERS SECTION ========== -->
+    <section class="section-padding" id="partners" style="background: #f8fafc;">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title-white" style="color: #0b1a33;"><i class="fas fa-handshake"></i> Our Partners</h2>
+          <p class="section-subtitle-white" style="color: #1f334b;">Trusted collaborators in health and community.</p>
+        </div>
+
+        <!-- MARQUEE WRAPPER -->
+        <div class="partners-wrapper">
+          <div class="partners-track">
+            <!-- 
+              ============================================================
+              HOW TO ADD MORE PARTNERS:
+              ~~~~~~~~~~~~~~~~~~~~~~~~~~
+              1. Copy a <div class="partner-item"> block below.
+              2. Change the src="..." to your partner's logo URL.
+              3. Update the <span> text to the partner's name.
+              4. Paste it anywhere inside .partners-track (before or after existing items).
+              5. The marquee will automatically include it — no extra CSS needed.
+              ============================================================
+            -->
+            <!-- Partner 1: Ethiopian Airlines -->
+            <div class="partner-item">
+              <img src="images/partner-1.png" alt="Ethiopian Airlines" />
+              <span>Ethiopian Airlines</span>
+            </div>
+            <!-- Partner 2: Commercial Bank of Ethiopia -->
+            <div class="partner-item">
+              <img src="images/partner-2.jpg" alt="Commercial Bank of Ethiopia" />
+              <span>Commercial Bank of Ethiopia</span>
+            </div>
+            <!-- Partner 3: Abyssinia Bank -->
+            <div class="partner-item">
+              <img src="images/partner-3.png" alt="Abyssinia Bank" />
+              <span>Abyssinia Bank</span>
+            </div>
+
+            <!-- DUPLICATE for seamless loop (marquee effect) -->
+            <div class="partner-item">
+              <img src="images/partner-1.png" alt="Ethiopian Airlines" />
+              <span>Ethiopian Airlines</span>
+            </div>
+            <!-- Partner 2: Commercial Bank of Ethiopia -->
+            <div class="partner-item">
+              <img src="images/partner-2.jpg" alt="Commercial Bank of Ethiopia" />
+              <span>Commercial Bank of Ethiopia</span>
+            </div>
+            <!-- Partner 3: Abyssinia Bank -->
+            <div class="partner-item">
+              <img src="images/partner-3.png" alt="Abyssinia Bank" />
+              <span>Abyssinia Bank</span>
+            </div>
+            
+            <div class="partner-item">
+              <img src="images/partner-1.png" alt="Ethiopian Airlines" />
+              <span>Ethiopian Airlines</span>
+            </div>
+            <!-- Partner 2: Commercial Bank of Ethiopia -->
+            <div class="partner-item">
+              <img src="images/partner-2.jpg" alt="Commercial Bank of Ethiopia" />
+              <span>Commercial Bank of Ethiopia</span>
+            </div>
+            <!-- Partner 3: Abyssinia Bank -->
+            <div class="partner-item">
+              <img src="images/partner-3.png" alt="Abyssinia Bank" />
+              <span>Abyssinia Bank</span>
+            </div>
+            <!-- ===== end of partner items ===== -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== PHOTO GALLERY SECTION ========== -->
+    <section class="section-padding" id="gallery" style="background: #ffffff;">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title-white"><i class="fas fa-images"></i> Photo Gallery</h2>
+          <p class="section-subtitle-white">Moments that define our care and community.</p>
+        </div>
+        <div class="gallery-placeholder">
+          <p>We're curating our best moments. Stay tuned for a visual tour of our facility, events, and patient stories.</p>
+          <!-- Button that you can later link to a gallery page -->
+          <a href="gallery.html" class="btn-gallery" id="galleryBtn" target="_blank"> See Gallery</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="section-padding" id="testimonials" style="background: #132a45;">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title"><i class="fas fa-quote-left"></i> Patient Stories</h2>
+          <p class="section-subtitle">Real experiences from real people who trusted us.</p>
+        </div>
+        <div class="grid-3">
+          <div class="card testimonial-card"><i class="fas fa-quote-left"></i><p>“The team saved my father’s life. We’ll be forever grateful.”</p><h5>— Emily R.</h5></div>
+          <div class="card testimonial-card"><i class="fas fa-quote-left"></i><p>“From diagnosis to recovery, they made everything clear and comforting.”</p><h5>— Michael T.</h5></div>
+          <div class="card testimonial-card"><i class="fas fa-quote-left"></i><p>“World-class care, truly personal. Landmark is a blessing.”</p><h5>— Sarah K.</h5></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact -->
+    <section class="section-padding" id="contact">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title-white"><i class="fas fa-phone-alt"></i> Get in Touch</h2>
+          <p class="section-subtitle-white">Reach out today — we're here 24/7.</p>
+        </div>
+        <div class="contact-grid">
+          <div class="contact-item"><i class="fas fa-envelope"></i> hello@landmarkhospital.com</div>
+          <div class="contact-item"><i class="fas fa-phone-alt"></i> +1 (800) 234‑5678</div>
+          <div class="contact-item"><i class="fas fa-headset"></i> 24/7 Helpline: +1 (800) 999‑8888</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Google Maps + Footer -->
+  <div class="map-wrapper">
+    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3940.6327365897714!2d38.747403399999996!3d9.005900699999998!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x164b85ce2722d275%3A0xddd72281d84dc6b2!2sLandmark%20General%20Hospital!5e0!3m2!1sen!2set!4v1782939688930!5m2!1sen!2set" 
+    width="600" 
+    height="450" 
+    style="border:0;" 
+    allowfullscreen="" 
+    loading="lazy" 
+    referrerpolicy="strict-origin-when-cross-origin">
+    </iframe>
+  </div>
+
+  <footer class="footer-bottom">
+    <div class="container">
+      <div class="footer-logo"><i class="fas fa-stethoscope"></i> Landmark Hospital  ·  © 2026</div>
+      <div class="footer-location"><i class="fas fa-map-pin"></i> 123 Health Ave, NY 10001</div>
+    </div>
+  </footer>
+</body>
+</html>
