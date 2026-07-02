@@ -222,11 +222,11 @@
     <div id="loginStatus" class="status-msg"></div>
     <div class="form-group">
       <label>Email</label>
-      <input type="email" id="loginEmail" placeholder="admin@hospital.com" />
+      <input type="email" id="loginEmail" placeholder="admin@hospital.com" value="admin@hospital.com" />
     </div>
     <div class="form-group">
       <label>Password</label>
-      <input type="password" id="loginPassword" placeholder="••••••••" />
+      <input type="password" id="loginPassword" placeholder="••••••••" value="admin123" />
     </div>
     <button class="btn btn-primary" onclick="handleLogin()">
       <i class="fas fa-sign-in-alt"></i> Login
@@ -317,22 +317,42 @@
 </div>
 
 <!-- ============================================================
-     COMPLETE JAVASCRIPT - SUPABASE VERSION
+     COMPLETE JAVASCRIPT - SUPABASE VERSION (FIXED)
      ============================================================ -->
 <script>
-
+// ============================================================
+// STEP 1: REPLACE THESE WITH YOUR SUPABASE CREDENTIALS
+// ============================================================
+// Go to: https://app.supabase.com > Your Project > Settings > API
+// Copy the "Project URL" and "anon public" key
+// ============================================================
 const SUPABASE_URL = 'https://kglbbkfhbqnbmdslbevu.supabase.co/rest/v1/';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtnbGJia2ZoYnFuYm1kc2xiZXZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwMjAxNTIsImV4cCI6MjA5ODU5NjE1Mn0.Fdk_OSdkomtQURFOXKIrzGBV6meUX2-e8yw8XHUU7rg';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// ============================================================
+// STEP 2: INITIALIZE SUPABASE (with error handling)
+// ============================================================
+let supabaseClient = null;
+
+try {
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  console.log('✅ Supabase client initialized');
+} catch (error) {
+  console.error('❌ Failed to initialize Supabase:', error);
+}
 
 // ============================================================
-// STEP 3: DATA FUNCTIONS (Using Supabase)
+// STEP 3: DATA FUNCTIONS (with error handling)
 // ============================================================
 
 async function getData(table) {
+  if (!supabaseClient) {
+    showStatus('❌ Supabase not connected. Check your credentials.', 'error');
+    return [];
+  }
+  
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from(table)
       .select('*')
       .order('id', { ascending: true });
@@ -346,9 +366,14 @@ async function getData(table) {
 }
 
 async function setData(table, items) {
+  if (!supabaseClient) {
+    showStatus('❌ Supabase not connected. Check your credentials.', 'error');
+    return false;
+  }
+  
   try {
     // Delete all existing records
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await supabaseClient
       .from(table)
       .delete()
       .neq('id', 0);
@@ -356,7 +381,7 @@ async function setData(table, items) {
     
     // Insert new records
     if (items.length > 0) {
-      const { error: insertError } = await supabase
+      const { error: insertError } = await supabaseClient
         .from(table)
         .insert(items);
       if (insertError) throw insertError;
@@ -370,7 +395,7 @@ async function setData(table, items) {
 }
 
 // ============================================================
-// STEP 4: RENDER FUNCTIONS (Updated column names)
+// STEP 4: RENDER FUNCTIONS
 // ============================================================
 
 async function renderStories() {
@@ -462,7 +487,7 @@ async function renderPhotos() {
 }
 
 // ============================================================
-// STEP 5: CRUD OPERATIONS (All async - Updated column names)
+// STEP 5: CRUD OPERATIONS
 // ============================================================
 
 // --- Patient Stories ---
@@ -481,7 +506,7 @@ async function addStory() {
   await renderStories();
   document.getElementById('storyName').value = '';
   document.getElementById('storyText').value = '';
-  showStatus('Story added successfully!', 'success');
+  showStatus('✅ Story added successfully!', 'success');
 }
 
 async function deleteStory(id) {
@@ -511,7 +536,7 @@ async function addDepartment() {
   document.getElementById('deptName').value = '';
   document.getElementById('deptIcon').value = '';
   document.getElementById('deptDesc').value = '';
-  showStatus('Department added!', 'success');
+  showStatus('✅ Department added!', 'success');
 }
 
 async function deleteDepartment(id) {
@@ -542,7 +567,7 @@ async function addDoctor() {
   document.getElementById('docName').value = '';
   document.getElementById('docYears').value = '';
   document.getElementById('docDate').value = '';
-  showStatus('Doctor added!', 'success');
+  showStatus('✅ Doctor added!', 'success');
 }
 
 async function toggleAvailability(id) {
@@ -583,7 +608,7 @@ async function addPhoto() {
   document.getElementById('photoTitle').value = '';
   document.getElementById('photoDesc').value = '';
   document.getElementById('photoUrl').value = '';
-  showStatus('Photo added to gallery!', 'success');
+  showStatus('✅ Photo added to gallery!', 'success');
 }
 
 async function deletePhoto(id) {
@@ -603,7 +628,6 @@ function showStatus(msg, type = 'info') {
   const el = document.getElementById('dashboardStatus');
   el.textContent = msg;
   el.className = `status-msg ${type}`;
-  // Auto-hide after 4 seconds
   if (window.statusTimeout) clearTimeout(window.statusTimeout);
   window.statusTimeout = setTimeout(() => { 
     el.className = 'status-msg'; 
@@ -611,7 +635,7 @@ function showStatus(msg, type = 'info') {
 }
 
 // ============================================================
-// STEP 7: LOGIN / LOGOUT
+// STEP 7: LOGIN / LOGOUT (FIXED - checks Supabase connection)
 // ============================================================
 
 async function handleLogin() {
@@ -619,21 +643,29 @@ async function handleLogin() {
   const password = document.getElementById('loginPassword').value.trim();
   const status = document.getElementById('loginStatus');
   
-  // Simple hardcoded authentication
+  // First check if Supabase is connected
+  if (!supabaseClient) {
+    status.textContent = '❌ Supabase is not connected. Check your credentials in the code.';
+    status.className = 'status-msg error';
+    return;
+  }
+  
+  // Hardcoded authentication (you can replace with Supabase auth later)
   if (email === 'admin@hospital.com' && password === 'admin123') {
     status.className = 'status-msg';
     status.textContent = '';
     
+    // Hide login, show dashboard
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('adminDashboard').classList.remove('hidden');
     
-    // Load all data
+    // Load all data from Supabase
     await renderStories();
     await renderDepartments();
     await renderDoctors();
     await renderPhotos();
     
-    showStatus('✅ Welcome back, Admin!', 'success');
+    showStatus('✅ Welcome back, Admin! Data loaded from Supabase.', 'success');
   } else {
     status.textContent = '❌ Invalid email or password. Please try again.';
     status.className = 'status-msg error';
@@ -646,9 +678,8 @@ function handleLogout() {
     document.getElementById('loginScreen').classList.remove('hidden');
     document.getElementById('loginStatus').className = 'status-msg';
     document.getElementById('loginStatus').textContent = '';
-    document.getElementById('loginEmail').value = '';
-    document.getElementById('loginPassword').value = '';
-    // Clear any status messages
+    document.getElementById('loginEmail').value = 'admin@hospital.com';
+    document.getElementById('loginPassword').value = 'admin123';
     document.getElementById('dashboardStatus').className = 'status-msg';
   }
 }
@@ -664,27 +695,24 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('loginEmail').addEventListener('keypress', function(e) {
     if (e.key === 'Enter') handleLogin();
   });
+  
+  // Test Supabase connection on load
+  if (supabaseClient) {
+    console.log('✅ Supabase is ready!');
+    // Try a test query to verify connection
+    supabaseClient.from('stories').select('count').limit(1)
+      .then(() => console.log('✅ Database connection verified'))
+      .catch(err => console.warn('⚠️ Database tables may not exist yet. Run the SQL setup.', err));
+  } else {
+    console.error('❌ Supabase client failed to initialize. Check your credentials.');
+  }
 });
-
-// ============================================================
-// STEP 9: CONSOLE HELP
-// ============================================================
 
 console.log('🚀 Landmark Hospital Admin Panel Loaded!');
 console.log('📌 To connect to Supabase:');
 console.log('   1. Replace SUPABASE_URL and SUPABASE_ANON_KEY with your credentials');
-console.log('   2. Run the SQL in Supabase SQL Editor (see comments)');
+console.log('   2. Run the SQL in Supabase SQL Editor');
 console.log('   3. Login with: admin@hospital.com / admin123');
-console.log('');
-console.log('📊 Table names and columns:');
-console.log('   stories: id, name, story_text, created_at');
-console.log('   departments: id, name, icon, description, created_at');
-console.log('   doctors: id, name, years, next_date, available, created_at');
-console.log('   photos: id, title, photo_desc, url, created_at');
-
-// ============================================================
-// END OF JAVASCRIPT
-// ============================================================
 </script>
 
 </body>
