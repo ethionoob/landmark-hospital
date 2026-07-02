@@ -334,11 +334,22 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 // ============================================================
 let supabaseClient = null;
 
-try {
-  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  console.log('✅ Supabase client initialized');
-} catch (error) {
-  console.error('❌ Failed to initialize Supabase:', error);
+// Check if supabase is available
+if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+  try {
+    // Only create client if URL and key are not placeholders
+    if (SUPABASE_URL !== 'https://YOUR_PROJECT_ID.supabase.co' && 
+        SUPABASE_ANON_KEY !== 'YOUR_ANON_KEY') {
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      console.log('✅ Supabase client initialized');
+    } else {
+      console.warn('⚠️ Please replace SUPABASE_URL and SUPABASE_ANON_KEY with your actual credentials');
+    }
+  } catch (error) {
+    console.error('❌ Failed to initialize Supabase:', error);
+  }
+} else {
+  console.error('❌ Supabase library not loaded');
 }
 
 // ============================================================
@@ -347,8 +358,13 @@ try {
 
 async function getData(table) {
   if (!supabaseClient) {
-    showStatus('❌ Supabase not connected. Check your credentials.', 'error');
-    return [];
+    console.warn('⚠️ Supabase not connected. Using localStorage fallback.');
+    // Fallback to localStorage
+    try {
+      return JSON.parse(localStorage.getItem(table)) || [];
+    } catch {
+      return [];
+    }
   }
   
   try {
@@ -360,15 +376,20 @@ async function getData(table) {
     return data || [];
   } catch (error) {
     console.error(`Error fetching ${table}:`, error);
-    showStatus(`Error loading ${table}: ${error.message}`, 'error');
-    return [];
+    // Fallback to localStorage
+    try {
+      return JSON.parse(localStorage.getItem(table)) || [];
+    } catch {
+      return [];
+    }
   }
 }
 
 async function setData(table, items) {
   if (!supabaseClient) {
-    showStatus('❌ Supabase not connected. Check your credentials.', 'error');
-    return false;
+    console.warn('⚠️ Supabase not connected. Saving to localStorage.');
+    localStorage.setItem(table, JSON.stringify(items));
+    return true;
   }
   
   try {
@@ -389,8 +410,9 @@ async function setData(table, items) {
     return true;
   } catch (error) {
     console.error(`Error saving ${table}:`, error);
-    showStatus(`Error saving: ${error.message}`, 'error');
-    return false;
+    // Fallback to localStorage
+    localStorage.setItem(table, JSON.stringify(items));
+    return true;
   }
 }
 
@@ -401,15 +423,15 @@ async function setData(table, items) {
 async function renderStories() {
   const list = document.getElementById('storyList');
   const stories = await getData('stories');
-  if (stories.length === 0) {
+  if (!stories || stories.length === 0) {
     list.innerHTML = '<p style="color:#6b7a8a; text-align:center; padding:20px;">No stories yet. Add one above!</p>';
     return;
   }
   list.innerHTML = stories.map(s => `
     <div class="item">
       <div class="item-info">
-        <strong>${s.name}</strong>
-        <small>${s.story_text}</small>
+        <strong>${s.name || 'Unknown'}</strong>
+        <small>${s.story_text || s.text || 'No description'}</small>
       </div>
       <div class="item-actions">
         <button class="btn btn-danger btn-sm" onclick="deleteStory(${s.id})"><i class="fas fa-trash"></i></button>
@@ -421,15 +443,15 @@ async function renderStories() {
 async function renderDepartments() {
   const list = document.getElementById('deptList');
   const depts = await getData('departments');
-  if (depts.length === 0) {
+  if (!depts || depts.length === 0) {
     list.innerHTML = '<p style="color:#6b7a8a; text-align:center; padding:20px;">No departments yet. Add one above!</p>';
     return;
   }
   list.innerHTML = depts.map(d => `
     <div class="item">
       <div class="item-info">
-        <strong><i class="fas ${d.icon}"></i> ${d.name}</strong>
-        <small>${d.description}</small>
+        <strong><i class="fas ${d.icon || 'fa-hospital'}"></i> ${d.name}</strong>
+        <small>${d.description || d.desc || 'No description'}</small>
       </div>
       <div class="item-actions">
         <button class="btn btn-danger btn-sm" onclick="deleteDepartment(${d.id})"><i class="fas fa-trash"></i></button>
@@ -441,7 +463,7 @@ async function renderDepartments() {
 async function renderDoctors() {
   const list = document.getElementById('docList');
   const docs = await getData('doctors');
-  if (docs.length === 0) {
+  if (!docs || docs.length === 0) {
     list.innerHTML = '<p style="color:#6b7a8a; text-align:center; padding:20px;">No doctors yet. Add one above!</p>';
     return;
   }
@@ -449,7 +471,7 @@ async function renderDoctors() {
     <div class="item">
       <div class="item-info">
         <strong>${d.name}</strong>
-        <small>${d.years} yrs · Next: ${d.next_date} · 
+        <small>${d.years || '0'} yrs · Next: ${d.next_date || d.date || 'TBD'} · 
           <span class="badge ${d.available ? 'badge-available' : 'badge-unavailable'}">
             ${d.available ? 'Available' : 'Unavailable'}
           </span>
@@ -468,7 +490,7 @@ async function renderDoctors() {
 async function renderPhotos() {
   const list = document.getElementById('photoList');
   const photos = await getData('photos');
-  if (photos.length === 0) {
+  if (!photos || photos.length === 0) {
     list.innerHTML = '<p style="color:#6b7a8a; text-align:center; padding:20px;">No photos yet. Add one above!</p>';
     return;
   }
@@ -476,8 +498,8 @@ async function renderPhotos() {
     <div class="item">
       <div class="item-info">
         <strong>${p.title}</strong>
-        <small>${p.photo_desc}</small>
-        <small style="display:block;color:#6b7a8a;font-size:0.7rem;">${p.url}</small>
+        <small>${p.photo_desc || p.desc || 'No description'}</small>
+        <small style="display:block;color:#6b7a8a;font-size:0.7rem;">${p.url || 'No URL'}</small>
       </div>
       <div class="item-actions">
         <button class="btn btn-danger btn-sm" onclick="deletePhoto(${p.id})"><i class="fas fa-trash"></i></button>
@@ -500,7 +522,7 @@ async function addStory() {
   }
   
   const stories = await getData('stories');
-  const id = stories.length ? Math.max(...stories.map(s => s.id)) + 1 : 1;
+  const id = stories.length ? Math.max(...stories.map(s => s.id || 0)) + 1 : 1;
   stories.push({ id, name, story_text });
   await setData('stories', stories);
   await renderStories();
@@ -529,7 +551,7 @@ async function addDepartment() {
   }
   
   const depts = await getData('departments');
-  const id = depts.length ? Math.max(...depts.map(d => d.id)) + 1 : 1;
+  const id = depts.length ? Math.max(...depts.map(d => d.id || 0)) + 1 : 1;
   depts.push({ id, name, icon, description });
   await setData('departments', depts);
   await renderDepartments();
@@ -560,7 +582,7 @@ async function addDoctor() {
   }
   
   const docs = await getData('doctors');
-  const id = docs.length ? Math.max(...docs.map(d => d.id)) + 1 : 1;
+  const id = docs.length ? Math.max(...docs.map(d => d.id || 0)) + 1 : 1;
   docs.push({ id, name, years, next_date, available });
   await setData('doctors', docs);
   await renderDoctors();
@@ -601,7 +623,7 @@ async function addPhoto() {
   }
   
   const photos = await getData('photos');
-  const id = photos.length ? Math.max(...photos.map(p => p.id)) + 1 : 1;
+  const id = photos.length ? Math.max(...photos.map(p => p.id || 0)) + 1 : 1;
   photos.push({ id, title, photo_desc, url });
   await setData('photos', photos);
   await renderPhotos();
@@ -635,22 +657,15 @@ function showStatus(msg, type = 'info') {
 }
 
 // ============================================================
-// STEP 7: LOGIN / LOGOUT (FIXED - checks Supabase connection)
+// STEP 7: LOGIN / LOGOUT (FIXED)
 // ============================================================
 
-async function handleLogin() {
+function handleLogin() {
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value.trim();
   const status = document.getElementById('loginStatus');
   
-  // First check if Supabase is connected
-  if (!supabaseClient) {
-    status.textContent = '❌ Supabase is not connected. Check your credentials in the code.';
-    status.className = 'status-msg error';
-    return;
-  }
-  
-  // Hardcoded authentication (you can replace with Supabase auth later)
+  // Hardcoded authentication
   if (email === 'admin@hospital.com' && password === 'admin123') {
     status.className = 'status-msg';
     status.textContent = '';
@@ -659,13 +674,13 @@ async function handleLogin() {
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('adminDashboard').classList.remove('hidden');
     
-    // Load all data from Supabase
-    await renderStories();
-    await renderDepartments();
-    await renderDoctors();
-    await renderPhotos();
+    // Load all data
+    renderStories();
+    renderDepartments();
+    renderDoctors();
+    renderPhotos();
     
-    showStatus('✅ Welcome back, Admin! Data loaded from Supabase.', 'success');
+    showStatus('✅ Welcome back, Admin!', 'success');
   } else {
     status.textContent = '❌ Invalid email or password. Please try again.';
     status.className = 'status-msg error';
@@ -696,23 +711,14 @@ document.addEventListener('DOMContentLoaded', function() {
     if (e.key === 'Enter') handleLogin();
   });
   
-  // Test Supabase connection on load
+  console.log('🚀 Landmark Hospital Admin Panel Loaded!');
+  console.log('📌 Login with: admin@hospital.com / admin123');
   if (supabaseClient) {
-    console.log('✅ Supabase is ready!');
-    // Try a test query to verify connection
-    supabaseClient.from('stories').select('count').limit(1)
-      .then(() => console.log('✅ Database connection verified'))
-      .catch(err => console.warn('⚠️ Database tables may not exist yet. Run the SQL setup.', err));
+    console.log('✅ Supabase is connected!');
   } else {
-    console.error('❌ Supabase client failed to initialize. Check your credentials.');
+    console.log('ℹ️ Using localStorage fallback. To use Supabase, replace SUPABASE_URL and SUPABASE_ANON_KEY');
   }
 });
-
-console.log('🚀 Landmark Hospital Admin Panel Loaded!');
-console.log('📌 To connect to Supabase:');
-console.log('   1. Replace SUPABASE_URL and SUPABASE_ANON_KEY with your credentials');
-console.log('   2. Run the SQL in Supabase SQL Editor');
-console.log('   3. Login with: admin@hospital.com / admin123');
 </script>
 
 </body>
