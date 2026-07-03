@@ -203,20 +203,6 @@
 
     .hidden { display: none !important; }
 
-    /* Loading spinner */
-    .loading-spinner {
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-      border: 3px solid rgba(255,255,255,0.3);
-      border-radius: 50%;
-      border-top-color: #fff;
-      animation: spin 1s ease-in-out infinite;
-    }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
     @media (max-width: 768px) {
       .admin-header .container { flex-direction: column; align-items: stretch; text-align: center; }
       .admin-header .nav-links { justify-content: center; }
@@ -274,7 +260,7 @@
       <div class="dashboard-card">
         <h2><i class="fas fa-quote-left"></i> Patient Stories</h2>
         <div class="form-group">
-          <label>Add New Story (Optional fields)</label>
+          <label>Add New Story</label>
           <input type="text" id="storyName" placeholder="Patient name (optional)" />
           <textarea id="storyText" placeholder="Write the testimonial (optional)" style="margin-top:6px;"></textarea>
           <button class="btn btn-primary btn-sm" onclick="addStory()"><i class="fas fa-plus"></i> Add Story</button>
@@ -286,7 +272,7 @@
       <div class="dashboard-card">
         <h2><i class="fas fa-building"></i> Departments</h2>
         <div class="form-group">
-          <label>Add Department (Optional fields)</label>
+          <label>Add Department</label>
           <div style="display:flex; gap:8px;">
             <input type="text" id="deptName" placeholder="Name (optional)" style="flex:1;" />
             <input type="text" id="deptIcon" placeholder="Icon (optional)" style="flex:1;" />
@@ -301,7 +287,7 @@
       <div class="dashboard-card">
         <h2><i class="fas fa-user-md"></i> Doctors</h2>
         <div class="form-group">
-          <label>Add Doctor (Optional fields)</label>
+          <label>Add Doctor</label>
           <input type="text" id="docName" placeholder="Name (optional)" />
           <input type="text" id="docYears" placeholder="Years (optional)" style="margin-top:6px;" />
           <input type="text" id="docDate" placeholder="Next available date (optional)" style="margin-top:6px;" />
@@ -318,7 +304,7 @@
       <div class="dashboard-card">
         <h2><i class="fas fa-images"></i> Gallery Photos</h2>
         <div class="form-group">
-          <label>Add Photo (Optional fields)</label>
+          <label>Add Photo</label>
           <input type="text" id="photoTitle" placeholder="Title (optional)" />
           <input type="text" id="photoDesc" placeholder="Description (optional)" style="margin-top:6px;" />
           <input type="text" id="photoUrl" placeholder="Image URL (optional)" style="margin-top:6px;" />
@@ -331,7 +317,7 @@
 </div>
 
 <!-- ============================================================
-     COMPLETE JAVASCRIPT - PURE SUPABASE (NO LOCALSTORAGE)
+     COMPLETE JAVASCRIPT - FIXED SUPABASE CONNECTION
      ============================================================ -->
 <script>
 // ============================================================
@@ -340,22 +326,25 @@
 // Go to: https://app.supabase.com > Your Project > Settings > API
 // Copy the "Project URL" and "anon public" key
 // ============================================================
-const SUPABASE_URL = 'https://kglbbkfhbqnbmdslbevu.supabase.co/rest/v1/';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtnbGJia2ZoYnFuYm1kc2xiZXZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwMjAxNTIsImV4cCI6MjA5ODU5NjE1Mn0.Fdk_OSdkomtQURFOXKIrzGBV6meUX2-e8yw8XHUU7rg';
+const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
+const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';
 
 // ============================================================
-// STEP 2: INITIALIZE SUPABASE
+// STEP 2: INITIALIZE SUPABASE (FIXED)
 // ============================================================
 let supabaseClient = null;
 
 // Check if supabase is available
 if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
   try {
-    // Only create client if URL and key are not placeholders
-    if (SUPABASE_URL !== 'https://YOUR_PROJECT_ID.supabase.co' && 
+    // Clean the URL - remove any trailing slashes
+    const cleanUrl = SUPABASE_URL.replace(/\/+$/, '');
+    
+    if (cleanUrl !== 'https://YOUR_PROJECT_ID.supabase.co' && 
         SUPABASE_ANON_KEY !== 'YOUR_ANON_KEY') {
-      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      supabaseClient = window.supabase.createClient(cleanUrl, SUPABASE_ANON_KEY);
       console.log('✅ Supabase client initialized');
+      console.log('📍 Connected to:', cleanUrl);
     } else {
       console.error('❌ Please replace SUPABASE_URL and SUPABASE_ANON_KEY with your actual credentials');
       alert('⚠️ Supabase not configured. Please update SUPABASE_URL and SUPABASE_ANON_KEY in the code.');
@@ -370,8 +359,33 @@ if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
 }
 
 // ============================================================
-// STEP 3: DATA FUNCTIONS (Pure Supabase - No localStorage)
+// STEP 3: DATA FUNCTIONS (Fixed error handling)
 // ============================================================
+
+async function testConnection() {
+  if (!supabaseClient) {
+    console.error('❌ Supabase client not initialized');
+    return false;
+  }
+  
+  try {
+    // Try a simple query to test connection
+    const { data, error } = await supabaseClient
+      .from('stories')
+      .select('count')
+      .limit(1);
+    
+    if (error) {
+      console.error('❌ Database connection error:', error);
+      return false;
+    }
+    console.log('✅ Database connection successful!');
+    return true;
+  } catch (error) {
+    console.error('❌ Database connection failed:', error);
+    return false;
+  }
+}
 
 async function getData(table) {
   if (!supabaseClient) {
@@ -383,7 +397,12 @@ async function getData(table) {
       .from(table)
       .select('*')
       .order('id', { ascending: true });
-    if (error) throw error;
+    
+    if (error) {
+      console.error(`Error details for ${table}:`, error);
+      throw new Error(`Supabase error: ${error.message}`);
+    }
+    
     return data || [];
   } catch (error) {
     console.error(`Error fetching ${table}:`, error);
@@ -401,7 +420,12 @@ async function addRecord(table, record) {
       .from(table)
       .insert([record])
       .select();
-    if (error) throw error;
+    
+    if (error) {
+      console.error(`Error details for ${table}:`, error);
+      throw new Error(`Supabase error: ${error.message}`);
+    }
+    
     return data;
   } catch (error) {
     console.error(`Error adding to ${table}:`, error);
@@ -419,7 +443,12 @@ async function deleteRecord(table, id) {
       .from(table)
       .delete()
       .eq('id', id);
-    if (error) throw error;
+    
+    if (error) {
+      console.error(`Error details for ${table}:`, error);
+      throw new Error(`Supabase error: ${error.message}`);
+    }
+    
     return true;
   } catch (error) {
     console.error(`Error deleting from ${table}:`, error);
@@ -438,7 +467,12 @@ async function updateRecord(table, id, updates) {
       .update(updates)
       .eq('id', id)
       .select();
-    if (error) throw error;
+    
+    if (error) {
+      console.error(`Error details for ${table}:`, error);
+      throw new Error(`Supabase error: ${error.message}`);
+    }
+    
     return data;
   } catch (error) {
     console.error(`Error updating ${table}:`, error);
@@ -555,7 +589,7 @@ async function renderPhotos() {
 }
 
 // ============================================================
-// STEP 5: CRUD OPERATIONS (Pure Supabase - No localStorage)
+// STEP 5: CRUD OPERATIONS
 // ============================================================
 
 // --- Patient Stories ---
@@ -705,7 +739,7 @@ function showStatus(msg, type = 'info') {
 // STEP 7: LOGIN / LOGOUT
 // ============================================================
 
-function handleLogin() {
+async function handleLogin() {
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value.trim();
   const status = document.getElementById('loginStatus');
@@ -716,7 +750,7 @@ function handleLogin() {
     return;
   }
   
-  // Hardcoded authentication (you can replace with Supabase auth later)
+  // Hardcoded authentication
   if (email === 'admin@hospital.com' && password === 'admin123') {
     status.className = 'status-msg';
     status.textContent = '';
@@ -724,11 +758,17 @@ function handleLogin() {
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('adminDashboard').classList.remove('hidden');
     
+    // Test connection first
+    const connected = await testConnection();
+    if (!connected) {
+      showStatus('⚠️ Connected to Supabase but database tables may not exist. Please run the SQL setup.', 'error');
+    }
+    
     // Load all data from Supabase
-    renderStories();
-    renderDepartments();
-    renderDoctors();
-    renderPhotos();
+    await renderStories();
+    await renderDepartments();
+    await renderDoctors();
+    await renderPhotos();
     
     showStatus('✅ Welcome back, Admin! Connected to Supabase.', 'success');
   } else {
@@ -750,7 +790,7 @@ function handleLogout() {
 }
 
 // ============================================================
-// STEP 8: KEYBOARD SUPPORT (Enter to login)
+// STEP 8: KEYBOARD SUPPORT
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -764,19 +804,14 @@ document.addEventListener('DOMContentLoaded', function() {
   console.log('🚀 Landmark Hospital Admin Panel Loaded!');
   console.log('📌 Using Supabase as the database.');
   console.log('📌 Login with: admin@hospital.com / admin123');
+  console.log('📌 All fields are optional. Empty fields will use default values.');
   
   if (supabaseClient) {
     console.log('✅ Supabase is connected!');
-    // Test the connection
-    supabaseClient.from('stories').select('count').limit(1)
-      .then(() => console.log('✅ Database connection verified'))
-      .catch(err => console.warn('⚠️ Database tables may not exist yet. Run the SQL setup in Supabase.'));
   } else {
     console.error('❌ Supabase client failed to initialize. Check your credentials.');
   }
 });
-
-console.log('ℹ️ All fields are optional. Empty fields will use default values.');
 </script>
 
 </body>
