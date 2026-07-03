@@ -1,40 +1,92 @@
-    (function() {
-      const btn = document.getElementById('hamburgerBtn');
-      const nav = document.getElementById('navLinks');
-      const icon = document.getElementById('hamburgerIcon');
+(function () {
+  'use strict';
 
-      function toggleMenu(forceClose) {
-        const isOpen = nav.classList.contains('open');
-        if (forceClose === true && !isOpen) return;
-        nav.classList.toggle('open');
-        const nowOpen = nav.classList.contains('open');
-        icon.className = nowOpen ? 'fas fa-times' : 'fas fa-bars';
-        document.body.style.overflow = nowOpen ? 'hidden' : '';
+  // Navigation DOM Nodes
+  const hamburgerBtn = document.getElementById('hamburgerBtn');
+  const navLinksMenu = document.getElementById('navLinks');
+  const hamburgerIcon = document.getElementById('hamburgerIcon');
+  const structuralLinks = document.querySelectorAll('.nav-links a');
+
+  /**
+   * Orchestrates the opening/closing mechanics of the responsive Mobile Drawer.
+   * @param {boolean|null} forceStateClose Explicit status declaration override.
+   */
+  function toggleMobileMenu(forceStateClose = null) {
+    const isCurrentlyOpen = navLinksMenu.classList.contains('open');
+    const targetState = (forceStateClose !== null) ? !forceStateClose : !isCurrentlyOpen;
+
+    if (targetState) {
+      navLinksMenu.classList.add('open');
+      hamburgerBtn.setAttribute('aria-expanded', 'true');
+      hamburgerIcon.className = 'fas fa-times';
+      document.body.style.overflow = 'hidden'; // Prevents background body scrolling layout bleed
+    } else {
+      navLinksMenu.classList.remove('open');
+      hamburgerBtn.setAttribute('aria-expanded', 'false');
+      hamburgerIcon.className = 'fas fa-bars';
+      document.body.style.overflow = '';
+    }
+  }
+
+  // Hamburger Button Explicit Bound Trigger
+  hamburgerBtn.addEventListener('click', function (event) {
+    event.stopPropagation();
+    toggleMobileMenu();
+  });
+
+  // Global Context Click Catcher to close Drawer when clicking outside area
+  document.addEventListener('click', function (event) {
+    if (navLinksMenu.classList.contains('open')) {
+      const isClickInsideMenu = navLinksMenu.contains(event.target);
+      const isClickInsideBtn = hamburgerBtn.contains(event.target);
+
+      if (!isClickInsideMenu && !isClickInsideBtn) {
+        toggleMobileMenu(true);
       }
+    }
+  });
 
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleMenu();
-      });
+  // Structural links integration layer for seamless page jump actions
+  structuralLinks.forEach(link => {
+    link.addEventListener('click', function () {
+      // Clean mobile state configuration matrix post-click
+      toggleMobileMenu(true);
 
-      document.addEventListener('click', (e) => {
-        const isNavOpen = nav.classList.contains('open');
-        if (!isNavOpen) return;
-        const target = e.target;
-        if (!nav.contains(target) && target !== btn && !btn.contains(target)) {
-          toggleMenu(true);
-        }
-      });
+      // Mutate visual tracking selection coordinates
+      structuralLinks.forEach(el => el.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
 
-      nav.querySelectorAll('a').forEach(link => {
-        link.addEventListener('click', () => {
-          if (nav.classList.contains('open')) toggleMenu(true);
+  // Intersection Observer for active dynamic state menu link highlighting
+  const sectionTrackingElements = document.querySelectorAll('section, header');
+  const intersectionConfiguration = {
+    root: null,
+    rootMargin: '-20% 0px -60% 0px', // Exact middle focal screen evaluation
+    threshold: 0
+  };
+
+  const linkStateObserver = new IntersectionObserver(function (entries) {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const structuralId = entry.target.getAttribute('id');
+        if (!structuralId) return;
+
+        structuralLinks.forEach(link => {
+          if (link.getAttribute('href') === `#${structuralId}`) {
+            link.classList.add('active');
+          } else {
+            link.classList.remove('active');
+          }
         });
-      });
+      }
+    });
+  }, intersectionConfiguration);
 
-      // Optional: gallery button click handler (you can replace with your own logic)
-      document.getElementById('galleryBtn')?.addEventListener('click', function(e) {
-        e.preventDefault();
-        alert('You can link this button to your gallery page later.');
-      });
-    })();
+  sectionTrackingElements.forEach(section => {
+    if (section.getAttribute('id')) {
+      linkStateObserver.observe(section);
+    }
+  });
+
+})();
